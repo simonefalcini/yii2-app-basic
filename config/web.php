@@ -2,6 +2,8 @@
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
+$urlmanager = require __DIR__ . '/urlmanager.php';
+$mailer = require __DIR__ . '/mailer.php';
 
 $config = [
     'id' => 'basic',
@@ -26,30 +28,47 @@ $config = [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
-        'mailer' => [
-            'class' => \yii\symfonymailer\Mailer::class,
-            'viewPath' => '@app/mail',
-            // send all mails to a file by default.
-            'useFileTransport' => true,
-        ],
+        'mailer' => $mailer,
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
             'targets' => [
                 [
+                    'enabled' => !YII_DEBUG,
+                    'class' => 'simonefalcini\SlackTarget\SlackTarget',
+                    'channel' => getenv('SLACK_CHANNEL'),
+                    'hook' => getenv('SLACK_HOOK'),
+                    'logVars' => [],
+                    'levels' => ['error', 'warning'],
+                    'except' => [
+                        'yii\web\HttpException:403',
+                        'yii\web\HttpException:404',
+                        'yii\web\HttpException:400',
+                        'yii\web\BadRequestHttpException:400',
+                    ],
+                ],
+                [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
+                    'logVars' => [],
+                    'logFile' => '@runtime/logs/errors.log',
+                    'except' => [
+                        'yii\web\HttpException:403',
+                        'yii\web\HttpException:404',
+                        'yii\web\HttpException:400',
+                        'yii\web\BadRequestHttpException:400',
+                    ],
+                ],
+                [
+                    'class' => 'yii\log\FileTarget',
+                    'logFile' => '@runtime/logs/info.log',
+                    'levels' => ['info'],
+                    'logVars' => [],
+                    'enabled' => YII_DEBUG,
                 ],
             ],
         ],
         'db' => $db,
-        /*
-        'urlManager' => [
-            'enablePrettyUrl' => true,
-            'showScriptName' => false,
-            'rules' => [
-            ],
-        ],
-        */
+        'urlManager' => $urlmanager,
     ],
     'params' => $params,
 ];

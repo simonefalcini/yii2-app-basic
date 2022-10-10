@@ -2,6 +2,7 @@
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
+$urlManager  = require(__DIR__ . '/urlmanager.php');
 
 $config = [
     'id' => 'basic-console',
@@ -18,11 +19,27 @@ $config = [
             'class' => 'yii\caching\FileCache',
         ],
         'log' => [
+            'traceLevel' => 3,
             'targets' => [
                 [
-                    'class' => 'yii\log\FileTarget',
+                    'enabled' => true,
+                    'class' => '\simonefalcini\SlackTarget\SlackTarget',
+                    'channel' => getenv('SLACK_CHANNEL'),
+                    'hook' => getenv('SLACK_HOOK'),
+                    'logVars' => [],
                     'levels' => ['error', 'warning'],
+                    'except' => [
+                        'yii\web\HttpException:404',
+                        'yii\web\HttpException:400',
+                        'yii\web\BadRequestHttpException:400',
+                    ],
                 ],
+                [
+                    'logVars' => [],
+                    'class' => 'yii\log\FileTarget',
+                    'logFile' => '@runtime/logs/console.log',
+                    'levels' => ['error', 'warning'],
+                ]
             ],
         ],
         'db' => $db,
